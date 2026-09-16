@@ -1,95 +1,3 @@
-export async function handler(request) {
-  // CORS 프리플라이트
-  if (request.method === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-      body: '',
-    };
-  }
-
-  if (request.method !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: true, message: 'POST 메서드만 지원됩니다.' }, null, 2),
-    };
-  }
-
-  let body;
-  try {
-    const text = await request.text();
-    body = text ? JSON.parse(text) : {};
-  } catch (e) {
-    return {
-      statusCode: 400,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: true, message: '유효하지 않은 JSON 요청입니다.' }, null, 2),
-    };
-  }
-
-  if (!body) {
-    return {
-      statusCode: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: true, message: '요청 본문이 비어 있습니다.' }, null, 2),
-    };
-  }
-
-  const oldText = body.old_text || '';
-  const newText = body.new_text || '';
-
-  // ---- 입력 validation ----
-  const articleStartPattern = /제\d+(?:의\d+)?조\b/;
-  if (!oldText.trim()) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '구판 입력이 비어 있습니다.' }, null, 2) };
-  }
-  if (!newText.trim()) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '신판 입력이 비어 있습니다.' }, null, 2) };
-  }
-  if (!articleStartPattern.test(oldText)) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '구판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.' }, null, 2) };
-  }
-  if (!articleStartPattern.test(newText)) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '신판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.' }, null, 2) };
-  }
-
-  // ---- 조문 파싱 ----
-  const oldArticles = parseArticles(oldText);
-  const newArticles = parseArticles(newText);
-  const oldEnact = parseEnactmentDate(oldText);
-  const newEnact = parseEnactmentDate(newText);
-
-  const todayKst = todayKST();
-  const diff = computeDiff(oldArticles, newArticles);
-
-  const result = {
-    diff,
-    enactment: {
-      old_date: oldEnact ? oldEnact.toISOString().slice(0, 10) : null,
-      new_date: newEnact ? newEnact.toISOString().slice(0, 10) : null,
-      reference_date: todayKst.toISOString().slice(0, 10),
-      new_d_day_status: dDayStatus(newEnact, todayKst),
-      old_d_day_status: dDayStatus(oldEnact, todayKst),
-    },
-  };
-
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    body: JSON.stringify(result, null, 2),
-  };
-}
-
-// ---------------------------------------------------------------------------------------
-// 헬퍼 함수 (admirl_diff.py의 로직을 JS로 재구현 — 계산 규칙은 동일)
-// ---------------------------------------------------------------------------------------
-
 const ARTICLE_RE = /제(\d+)조(?:의(\d+))?(?:\(([^)]*)\))?\s*(.*)/;
 const ARTICLE_START_RE = /제\d+조(?:의\d+)?(?:\s|\(|$)/;
 
@@ -148,7 +56,6 @@ function parseArticles(text) {
   return articles;
 }
 
-// ---- 시행일 파싱 ----
 const ENACT_SUBJECTS = ['지침', '규정', '훈령', '예규', '요령'];
 const ENACT_BIS_PATTERNS = ENACT_SUBJECTS.map(subj =>
   new RegExp(`이\\s*${subj}(?:은|는)\\s*(\\d{4})\\s*년\\s*(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일부터\\s*시행`)
@@ -167,7 +74,6 @@ function parseEnactmentDate(text) {
   return null;
 }
 
-// ---- Diff 판정 ----
 function computeDiff(oldArticles, newArticles) {
   const diff = [];
   const allNums = [...new Set([...Object.keys(oldArticles), ...Object.keys(newArticles)])].sort();
@@ -208,10 +114,9 @@ function computeDiff(oldArticles, newArticles) {
   return diff;
 }
 
-// ---- D-day 판정 (KST) ----
 function todayKST() {
   const now = new Date();
-  const kstOffset = 9 * 60; // UTC+9
+  const kstOffset = 9 * 60;
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
   const kst = new Date(utc + kstOffset * 60000);
   return new Date(Date.UTC(kst.getFullYear(), kst.getMonth(), kst.getDate()));
@@ -230,4 +135,90 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
 };
 
-module.exports.handler = handler;
+async function handler(request) {
+  if (request.method === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
+    };
+  }
+
+  if (request.method !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: true, message: 'POST 메서드만 지원됩니다.' }, null, 2),
+    };
+  }
+
+  let body;
+  try {
+    const text = await request.text();
+    body = text ? JSON.parse(text) : {};
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: true, message: '유효하지 않은 JSON 요청입니다.' }, null, 2),
+    };
+  }
+
+  if (!body || typeof body !== 'object') {
+    return {
+      statusCode: 400,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: true, message: '요청 본문이 비어 있거나 객체가 아닙니다.' }, null, 2),
+    };
+  }
+
+  const oldText = body.old_text || '';
+  const newText = body.new_text || '';
+
+  if (!oldText.trim()) {
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '구판 입력이 비어 있습니다.' }, null, 2) };
+  }
+  if (!newText.trim()) {
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '신판 입력이 비어 있습니다.' }, null, 2) };
+  }
+
+  const articleStartPattern = /제\d+(?:의\d+)?조\b/;
+  if (!articleStartPattern.test(oldText)) {
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '구판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.' }, null, 2) };
+  }
+  if (!articleStartPattern.test(newText)) {
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '신판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.' }, null, 2) };
+  }
+
+  const oldArticles = parseArticles(oldText);
+  const newArticles = parseArticles(newText);
+  const oldEnact = parseEnactmentDate(oldText);
+  const newEnact = parseEnactmentDate(newText);
+
+  const todayKst = todayKST();
+  const diff = computeDiff(oldArticles, newArticles);
+
+  const result = {
+    diff,
+    enactment: {
+      old_date: oldEnact ? oldEnact.toISOString().slice(0, 10) : null,
+      new_date: newEnact ? newEnact.toISOString().slice(0, 10) : null,
+      reference_date: todayKst.toISOString().slice(0, 10),
+      new_d_day_status: dDayStatus(newEnact, todayKst),
+      old_d_day_status: dDayStatus(oldEnact, todayKst),
+    },
+  };
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify(result, null, 2),
+  };
+}
+
+module.exports = { handler };
