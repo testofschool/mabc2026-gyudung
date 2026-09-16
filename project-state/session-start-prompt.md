@@ -23,9 +23,7 @@
 5. `/Users/felix/mabc-finals/AGENTS.md`
 6. `/Users/felix/mabc-finals/CONTEXT.md`
 7. `/Users/felix/mabc-finals/models.md`
-8. `/Users/felix/mabc-finals/todo.md` (있으면)
-9. `/Users/felix/mabc-finals/decision.md` (있으면)
-10. `/Users/felix/mabc-finals/orchestration.md` (있으면)
+8. `/Users/felix/mabc-finals/STATE.md` (현재 todo·작업 상태)
 
 ## 작업 시작 전 확인할 것
 
