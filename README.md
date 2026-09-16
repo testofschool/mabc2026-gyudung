@@ -17,42 +17,48 @@
 ```
 mabc-finals/
 ├── AGENTS.md              # 루트 에이전트 지침 (항상 로드)
-├── agent.md               # 범용 에이전트 지침 (플랫폼 독립)
-├── orchestration.md       # 작업 흐름·역할·서브에이전트 라우팅
-├── skill-manifest.md      # 프로젝트 스킬 카탈로그
-├── todo.md                # 활성 작업 항목
+├── CONTEXT.md             # 현재 상태·미결 항목·파일 위치
 ├── decision.md            # 결정 로그 (ADR 스타일)
-├── progress.md            # 세션별 작업 로그
+├── STATE.md               # 현재 작업 상태 + 활성 todo
+├── HANDOFF.md             # 직전 세션 진행·결정·남은 작업·다음 액션
+├── MEMORY.md              # 프로젝트 장기 기억
+├── README.md              # 이 파일
 ├── skills/                # 프로젝트 정의 스킬
-│   └── admrul-diff/       # → prelim/admrul-diff로 심볼릭 링크 예정
+│   └── admrul-diff/       # 행정규칙 신·구 대조 스킬
+├── prelim/                # 기확보 스킬 (admirl-diff 등)
+│   ├── admrul-diff/
+│   ├── numbers-check-skill/
+│   └── ordin-gap/
 ├── .agents/               # 에이전트 런타임 설정
-│   ├── orchestration.md   # 오케스트레이션 맵
 │   ├── skills/
 │   ├── memories/
 │   └── tasks/
 ├── docs/
-│   ├── references/        # 장문 참조 문서
-│   └── conventions/
-│       └── SKILL_conventions.md
+│   └── references/        # 장문 참조 문서
 ├── submission/            # 제출물
 │   ├── PRD/
 │   ├── poster/
 │   ├── presentation/
-│   ├── demo-video/
-│   └── checklist.md
-├── scripts/               # 결정론적 검증 스크립트
-├── service/               # 서비스 코드
-│   ├── app.py
-│   └── requirements.txt
-├── prelim/                # 기확보 스킬 (admirl-diff 등)
-└── research/              # 연구용 (제출물 오염 방지)
+│   └── demo-video/
+├── scripts/               # 결정론적 검증 스크립트 (현재 비어 있음)
+├── service/               # 서비스 코드 (Vercel 배포용)
+│   ├── api/
+│   │   └── admrul-diff/
+│   │       └── index.py
+│   ├── public/
+│   │   └── index.html
+│   ├── pyproject.toml
+│   ├── requirements.txt
+│   └── uv.lock
+├── research/              # 연구용 (제출물 오염 방지)
+└── vercel.json            # Vercel 설정
 ```
 
 ## 빠르게 시작하는 법
 
-1. 새 세션 진입 시 `CONTEXT.md` → `agent.md` → `orchestration.md` 순서로 읽는다.
-2. MABC 마감 관련 작업은 `todo.md` 상단 항목부터 처리한다.
-3. admirl-diff 실행이 필요하면 `skills/admrul-diff/SKILL.md`를 따르고, 계산은 반드시 `scripts/admrul_diff.py`로만 수행한다.
+1. 새 세션 진입 시 `AGENTS.md`(루트 지침)를 먼저 읽고, 이어서 `project-state/` 폴더의 `STATE.md`·`HANDOFF.md`·`MEMORY.md`를 읽는다.
+2. MABC 마감 관련 작업은 `STATE.md`의 현재 todo 상단 항목부터 처리한다.
+3. admirl-diff 실행이 필요하면 `skills/admrul-diff/SKILL.md`를 따르고, 계산은 반드시 실제 스크립트(`prelim/admrul-diff/scripts/admrul_diff.py` 또는 `service/api/admrul-diff/index.py`)로만 수행한다.
 4. 외부 주장(경쟁자·시장·정책 동향)은 웹검색/웹추출로 1차 소스 확인 후 쓴다.
 
 ## 규칙 요약
