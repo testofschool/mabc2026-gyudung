@@ -111,83 +111,6 @@
     line-height: 1.5;
   }
 
-  .file-upload-area {
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    background: #fafbfc;
-  }
-
-  .file-upload-area.dragover {
-    border-color: var(--accent);
-    background: #eff6ff;
-  }
-
-  .file-upload-area input[type="file"] {
-    display: none;
-  }
-
-  .file-upload-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--fg);
-    transition: border-color 0.15s, background 0.15s;
-  }
-
-  .file-upload-label:hover {
-    border-color: var(--accent);
-    background: #f8fafc;
-  }
-
-  .file-upload-label input[type="file"] {
-    display: none;
-  }
-
-  .file-info {
-    margin-top: 8px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .file-info .file-name {
-    font-weight: 500;
-    color: var(--fg);
-  }
-
-  .file-info .file-remove {
-    background: none;
-    border: none;
-    color: #991b1b;
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-decoration: underline;
-  }
-
-  .file-info .file-remove:hover {
-    background: #fef2f2;
-  }
-
-  .file-support-note {
-    margin-top: 6px;
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
   .actions {
     display: flex;
     gap: 10px;
@@ -428,38 +351,12 @@
     <label for="oldText">구판 텍스트 (개정 전)</label>
     <textarea id="oldText" placeholder="제1조(목적) 이 지침은…&#10;제2조(운영시간) …&#10;부칙&#10;이 지침은 2026년 3월 1일부터 시행한다." aria-describedby="oldHint"></textarea>
     <p id="oldHint" class="hint">행정규칙/지침/훈령/예규/요령 등의 전문을 그대로 붙여넣으세요. 조문 번호(제N조)와 부칙 시행일이 포함되어야 합니다.</p>
-
-    <div class="file-upload-area" id="oldFileArea">
-      <label class="file-upload-label" for="oldFileInput">
-        <span>📎</span>
-        <span>구판 파일 선택 (txt, csv, xlsx, docx)</span>
-        <input type="file" id="oldFileInput" accept=".txt,.csv,.xlsx,.xls,.docx" />
-      </label>
-      <div class="file-info" id="oldFileInfo" style="display:none;">
-        <span class="file-name" id="oldFileName"></span>
-        <button class="file-remove" id="oldFileRemove" type="button">제거</button>
-      </div>
-      <p class="file-support-note">지원 형식: txt, csv, xlsx/xls, docx · HWP/HWPX는 현재 자동 추출 미지원 — 텍스트를 복사하여 붙여넣어 주세요.</p>
-    </div>
   </div>
 
   <div class="card">
     <label for="newText">신판 텍스트 (개정 후)</label>
     <textarea id="newText" placeholder="제1조(목적) 이 지침은…&#10;제2조(운영시간) …&#10;부칙&#10;이 지침은 2026년 9월 15일부터 시행한다." aria-describedby="newHint"></textarea>
     <p id="newHint" class="hint">같은 규칙의 개정 이후 전문을 그대로 붙여넣으세요.</p>
-
-    <div class="file-upload-area" id="newFileArea">
-      <label class="file-upload-label" for="newFileInput">
-        <span>📎</span>
-        <span>신판 파일 선택 (txt, csv, xlsx, docx)</span>
-        <input type="file" id="newFileInput" accept=".txt,.csv,.xlsx,.xls,.docx" />
-      </label>
-      <div class="file-info" id="newFileInfo" style="display:none;">
-        <span class="file-name" id="newFileName"></span>
-        <button class="file-remove" id="newFileRemove" type="button">제거</button>
-      </div>
-      <p class="file-support-note">지원 형식: txt, csv, xlsx/xls, docx · HWP/HWPX는 현재 자동 추출 미지원 — 텍스트를 복사하여 붙여넣어 주세요.</p>
-    </div>
   </div>
 
   <div class="actions">
@@ -518,109 +415,16 @@ function clearAll() {
   document.getElementById('oldText').value = '';
   document.getElementById('newText').value = '';
   document.getElementById('result').innerHTML = '';
-  clearFileInfo('old');
-  clearFileInfo('new');
 }
-
-// ---- 파일 첨부 로직 ----
-
-const SUPPORTED_EXTENSIONS = new Set(['.txt', '.csv', '.xlsx', '.xls', '.docx']);
-
-function getFileExtension(filename) {
-  const idx = filename.lastIndexOf('.');
-  if (idx < 0) return '';
-  return filename.slice(idx).toLowerCase();
-}
-
-function isSupported(filename) {
-  return SUPPORTED_EXTENSIONS.has(getFileExtension(filename));
-}
-
-function showFileInfo(side, name) {
-  const infoEl = document.getElementById(side + 'FileInfo');
-  const nameEl = document.getElementById(side + 'FileName');
-  nameEl.textContent = name;
-  infoEl.style.display = 'flex';
-}
-
-function clearFileInfo(side) {
-  document.getElementById(side + 'FileInfo').style.display = 'none';
-  document.getElementById(side + 'FileName').textContent = '';
-  document.getElementById(side + 'FileInput').value = '';
-}
-
-function setupFileInput(side) {
-  const input = document.getElementById(side + 'FileInput');
-  const area = document.getElementById(side + 'FileArea');
-
-  // 파일 선택 시
-  input.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!isSupported(file.name)) {
-      resultEl.innerHTML = '<div class="error-box" role="alert">지원하지 않는 파일 형식입니다: ' + file.name + '. 지원 형식: txt, csv, xlsx, docx</div>';
-      input.value = '';
-      return;
-    }
-    showFileInfo(side, file.name);
-  });
-
-  // 드래그 앤 드롭
-  area.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    area.classList.add('dragover');
-  });
-  area.addEventListener('dragleave', function(e) {
-    e.preventDefault();
-    area.classList.remove('dragover');
-  });
-  area.addEventListener('drop', function(e) {
-    e.preventDefault();
-    area.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    if (!isSupported(file.name)) {
-      resultEl.innerHTML = '<div class="error-box" role="alert">지원하지 않는 파일 형식입니다: ' + file.name + '. 지원 형식: txt, csv, xlsx, docx</div>';
-      return;
-    }
-    // FileInput에 설정 (change 이벤트가 발생하지 않으므로 수동 처리)
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    input.files = dt.files;
-    showFileInfo(side, file.name);
-  });
-
-  // 제거 버튼
-  document.getElementById(side + 'FileRemove').addEventListener('click', function() {
-    clearFileInfo(side);
-    resultEl.innerHTML = '';
-  });
-}
-
-setupFileInput('old');
-setupFileInput('new');
-
-const resultEl = document.getElementById('result');
 
 async function runDiff() {
   const oldText = document.getElementById('oldText').value;
   const newText = document.getElementById('newText').value;
-  const oldFile = document.getElementById('oldFileInput').files[0];
-  const newFile = document.getElementById('newFileInput').files[0];
+  const resultEl = document.getElementById('result');
   const runBtn = document.getElementById('runBtn');
 
-  // 파일 선택 시 텍스트 영역이 비어 있어도 파일만 사용 가능
-  const hasOldText = oldText.trim().length > 0;
-  const hasNewText = newText.trim().length > 0;
-  const hasOldFile = !!oldFile;
-  const hasNewFile = !!newFile;
-
-  if (!hasOldText && !hasOldFile) {
-    resultEl.innerHTML = '<div class="error-box" role="alert">구판 텍스트 또는 구판 파일을 입력해주세요.</div>';
-    return;
-  }
-  if (!hasNewText && !hasNewFile) {
-    resultEl.innerHTML = '<div class="error-box" role="alert">신판 텍스트 또는 신판 파일을 입력해주세요.</div>';
+  if (!oldText.trim() || !newText.trim()) {
+    resultEl.innerHTML = '<div class="error-box" role="alert">구판과 신판 텍스트를 모두 입력해주세요.</div>';
     return;
   }
 
@@ -629,16 +433,10 @@ async function runDiff() {
   resultEl.innerHTML = '<p class="loading">대조 중…</p>';
 
   try {
-    const formData = new FormData();
-    if (hasOldText) formData.append('old_text', oldText);
-    if (hasNewText) formData.append('new_text', newText);
-    if (hasOldFile) formData.append('old_file', oldFile, oldFile.name);
-    if (hasNewFile) formData.append('new_file', newFile, newFile.name);
-
     const res = await fetch('/api/admrul-diff', {
       method: 'POST',
-      body: formData,
-    });
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_text: oldText, new_text: newText }),
     });
 
     const data = await res.json();
@@ -667,18 +465,6 @@ function renderResult(data) {
   const diff = data.diff || [];
   const enact = data.enactment || {};
   let html = '';
-
-  // 입력 방식 표시
-  const inputMethod = data.input_method || 'text';
-  const fileInfo = data.file_info || {};
-  if (inputMethod === 'file') {
-    html += '<div class="card result-card" style="margin-bottom:12px;"><p style="margin:0;color:var(--muted);font-size:0.8rem;">📎 파일 입력: ';
-    const parts = [];
-    if (fileInfo.old_file) parts.push('구판: ' + escapeHtml(fileInfo.old_file));
-    if (fileInfo.new_file) parts.push('신판: ' + escapeHtml(fileInfo.new_file));
-    html += parts.join(' · ');
-    html += '</p></div>';
-  }
 
   // Diff 표
   if (diff.length > 0) {

@@ -2,7 +2,7 @@
 
 행정규칙/지침/훈령 등 조문 단위로 바뀌는 문서를 **구판·신판 텍스트만 넣으면 조항별 대조표 + 시행일/D-day까지 자동 출력**하는 서비스다.
 
-- 핵심 로직: `skills/admrul-diff/SKILL.md` (실제 실행은 `scripts/admrul_diff.py`)
+- 핵심 로직: `skills/admrul-diff/SKILL.md` (실제 실행 스크립트는 `prelim/admrul-diff/scripts/admrul_diff.py` 및 `service/api/admrul-diff/index.py`)
 - 제출 마감: **2026-09-16(수) 23:59**
 - 제출 양식 근거: `research/[MABC 2026] 결선 결과물 제출 양식 2.pdf`
 

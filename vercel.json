@@ -1,9 +1,11 @@
 {
   "version": 2,
   "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
     { "src": "service/api/admrul-diff/index.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/api/admrul-diff", "dest": "service/api/admrul-diff/index.py" }
+    { "src": "/api/admrul-diff", "dest": "service/api/admrul-diff/index.py" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
