@@ -1,0 +1,71 @@
+{
+  "submission_preflight_report": {
+    "target": "규정다름 (MABC 2026 결선)",
+    "executed_at": "2026-09-16",
+    "status": "PARTIAL — 데모영상 미완료, Google Form 미제출",
+    "gates": [
+      {
+        "gate": "1. form↔package↔README 일관성",
+        "result": "PASS (부분)",
+        "evidence": "README.md에 서비스 URL, GitHub URL, 파일 위치가 실제 respository와 일치. 단 제출물 PDF 파일명이 루트에 있고 submission/ 폴더엔 poster만 존재 — 불일관."
+      },
+      {
+        "gate": "2. 카테고리 하드코딩",
+        "result": "PASS",
+        "evidence": "admrl_diff.py는 특정 규정명이 아닌 조문 패턴 기반 파싱. 하드코딩 없음."
+      },
+      {
+        "gate": "3. 과도한 주장 (identity-match)",
+        "result": "PASS",
+        "evidence": "서비스 설명에서 '동일한 서비스'라고 주장하지 않음. '대조 + D-day 계산'으로 기술."
+      },
+      {
+        "gate": "4. 귀속 오류 (misattributed negatives)",
+        "result": "PASS",
+        "evidence": "admrl-diff 실습/테스트에서 실패 케이스를 우리 스크립트 문제로 잘못 귀속하지 않음."
+      },
+      {
+        "gate": "5. 헤드라인-결정 일관성",
+        "result": "PASS",
+        "evidence": "서비스 헤드라인(규정다름 = 대조 + D-day)이 실제 구현과 일치."
+      },
+      {
+        "gate": "6. 소스 URL 검증",
+        "result": "PASS",
+        "evidence": "서비스 URL https://mabc-finals.vercel.app 실제 접속 확인 (200), API 동작 확인 (diff + D-day 반환)."
+      },
+      {
+        "gate": "7. 파일명 규칙",
+        "result": "PASS (부분)",
+        "evidence": "강정민_PRD.pdf, 강정민_발표자료.pdf, 강정민_포스터.pdf, 강정민_서비스소개.txt — 팀명_파일명 형식 준수. 단 강정민_데모영상.mp4 없음."
+      },
+      {
+        "gate": "8a. 텍스트 레이어 유출 grep",
+        "result": "PASS",
+        "evidence": "서비스 코드(index.py, index.html)에 API 키/토큰 없음 확인. 코드 내 개인 식별 정보 없음."
+      },
+      {
+        "gate": "8b. 이미지 레이어 유출",
+        "result": "N/A — 제출 이미지 아직 없음",
+        "evidence": "데모영상 미완료, 포스터에 타인 얼굴/민감 정보 없음 확인 필요."
+      },
+      {
+        "gate": "9. 관찰 전용 언어",
+        "result": "PASS",
+        "evidence": "PRD/서비스 소개에서 관찰 기반 서술 확인."
+      },
+      {
+        "gate": "10. 오래된 폴더/첨부",
+        "result": "PASS (부분)",
+        "evidence": "submission/ 폴더에 poster만 존재, PRD/발표자료가 루트에 있어 불일치. 파일 최신성 확인 필요."
+      },
+      {
+        "gate": "11. 요구사항-게이트 커버리지",
+        "result": "PARTIAL — 데모영상 미완료, Google Form 미제출",
+        "evidence": "8개 필수 항목 중 6개 완료, 2개 미완료 (데모영상, Form 제출)."
+      }
+    ],
+    "unjudged_requirements": [],
+    "verdict": "HOLD — 데모영상 녹화 + Google Form 제출 후 제출 가능"
+  }
+}

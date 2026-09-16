@@ -1,24 +1,35 @@
-# 연구 자료 (제출물 오염 방지)
-research/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+*.egg
 
-# 기확보 스킬 (서비스 코드와 무관)
-prelim/
+# Vercel
+.vercel/
 
-# 프로젝트 상태 (개인)
-project-state/
+# 제출물 byproducts (생성 스크립트)
+gen_*.py
+check_400char.py
+deploy_prepare.py
 
-# 제출물 (별도 관리)
-submission/
+# 테스트 스크립트 (서비스 코드 아님)
+service/test_*.py
 
-# 문서
-docs/
-
-# 스크립트
-scripts/
-
-# 스킬
-skills/
-
-# macOS
+# OS
 .DS_Store
-.vercel
+Thumbs.db
+
+# 문서 byproducts
+FRONT_BUILD_SPEC.md
+PRODUCT_LOGIC_SPEC.md
+SERVICE_ANALYSIS.md
+SERVICE_DESCRIPTION.txt
+SERVICE_DESCRIPTION_400.txt
+SERVICE_DESCRIPTION_400CHAR.txt
+decision.md
+decisions.md
+MEMORY.md
+submission-preflight-check.md

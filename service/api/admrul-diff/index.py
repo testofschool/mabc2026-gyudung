@@ -386,20 +386,37 @@ def _handle_multipart(environ, start_response, headers):
         return [body]
 
     def get_value(name: str) -> str:
+        if name not in fs:
+            return ""
         field = fs[name]
+        # cgi.FieldStorage가 텍스트 필드를 FieldStorage 객체로 파싱할 수 있음
+        # 이 경우 .value로 접근하면 문자열을 얻음 (파일 필드는 .file에 저장됨)
         if isinstance(field, str):
             return field
+        # FieldStorage 객체일 때
+        if hasattr(field, 'filename') and field.filename:
+            # 파일 필드: .file에서 읽음
+            if hasattr(field, 'file') and field.file:
+                raw = field.file.read()
+                if isinstance(raw, bytes):
+                    return raw.decode('utf-8', errors='replace')
+                return str(raw)
+            return ""
+        # 텍스트 필드: .value 또는 .file에서 읽음
+        if hasattr(field, 'value'):
+            val = field.value
+            if isinstance(val, str):
+                return val
+            if isinstance(val, bytes):
+                return val.decode('utf-8', errors='replace')
+            return str(val)
+        # fallback: .file에서 읽기
         if hasattr(field, 'file') and field.file:
             raw = field.file.read()
             if isinstance(raw, bytes):
-                decoded = raw.decode('utf-8', errors='replace')
-            else:
-                decoded = str(raw)
-            return decoded
-        # 문자열 필드인데 str이 아닌 경우
-        if isinstance(field, bytes):
-            return field.decode('utf-8', errors='replace')
-        return str(field)
+                return raw.decode('utf-8', errors='replace')
+            return str(raw)
+        return ""
 
     def get_file(name: str):
         """파일 필드에서 (bytes, filename) 반환. 없으면 (None, None)."""
