@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="규정다름 — 행정규칙/지침의 구판과 신판을 붙여넣으면 조문별 대조표 + 시행일 D-day를 자동으로 출력합니다.">
+<title>규정다름 — 행정규칙 신·구 조문 대조</title>
+<style>
+  :root {
+    --fg: var(--foreground, #1a1a1a);
+    --muted: var(--muted-foreground, #6b7280);
+    --accent: var(--accent, #2563eb);
+    --accent-hover: #1d4ed8;
+    --border: var(--border, #e5e7eb);
+    --card: var(--card, #ffffff);
+    --bg: #f3f4f6;
+    --badge-added-bg: #dcfce7;
+    --badge-added-fg: #166534;
+    --badge-modified-bg: #fef9c3;
+    --badge-modified-fg: #854d0e;
+    --badge-deleted-bg: #fee2e2;
+    --badge-deleted-fg: #991b1b;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-fg: #991b1b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    padding: 20px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 16px 0;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 4vw, 2rem);
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: var(--fg);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    resize: vertical;
+    color: var(--fg);
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    min-width: 120px;
+    font-family: inherit;
+  }
+
+  .btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn.secondary {
+    background: #e5e7eb;
+    color: var(--fg);
+  }
+
+  .btn.secondary:hover:not(:disabled) {
+    background: #d1d5db;
+  }
+
+  #result {
+    margin-top: 8px;
+  }
+
+  .result-card {
+    margin-bottom: 16px;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card h3 {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-card h3::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    background: #f9fafb;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+
+  .badge-added {
+    background: var(--badge-added-bg);
+    color: var(--badge-added-fg);
+  }
+
+  .badge-modified {
+    background: var(--badge-modified-bg);
+    color: var(--badge-modified-fg);
+  }
+
+  .badge-deleted {
+    background: var(--badge-deleted-bg);
+    color: var(--badge-deleted-fg);
+  }
+
+  .error-box {
+    background: var(--error-bg);
+    color: var(--error-fg);
+    border: 1px solid var(--error-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .loading {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    padding: 12px 0;
+  }
+
+  .sample-link {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .sample-link:hover {
+    color: var(--accent-hover);
+  }
+
+  .empty-state {
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px 0 10px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+  }
+
+  .json-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: inherit;
+  }
+
+  .json-toggle:hover {
+    background: #f3f4f6;
+  }
+
+  pre {
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-top: 8px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 14px; }
+    .card { padding: 16px; }
+    .actions { flex-direction: column; }
+    .btn { width: 100%; min-width: unset; }
+    table { font-size: 0.82rem; }
+    th, td { padding: 8px 10px; }
+    textarea { min-height: 140px; font-size: 0.8rem; }
+    /* 모바일에서 결과 표를 세로 스택으로표시 */
+    .result-card table { display: block; overflow-x: auto; }
+    .result-card table th,
+    .result-card table td { white-space: normal; word-break: break-word; }
+    .result-card table thead { display: table-header-group; }
+    .result-card table tr { display: table-row; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .result-card { animation: none; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>규정다름</h1>
+    <p class="subtitle">행정규칙/지침/훈령/예규/요령의 구판과 신판 텍스트를 붙여넣으면, 조문별 대조표와 시행일 D-day를 자동으로 출력합니다.</p>
+  </header>
+
+  <div class="card">
+    <label for="oldText">구판 텍스트 (개정 전)</label>
+    <textarea id="oldText" placeholder="제1조(목적) 이 지침은…&#10;제2조(운영시간) …&#10;부칙&#10;이 지침은 2026년 3월 1일부터 시행한다." aria-describedby="oldHint"></textarea>
+    <p id="oldHint" class="hint">행정규칙/지침/훈령/예규/요령 등의 전문을 그대로 붙여넣으세요. 조문 번호(제N조)와 부칙 시행일이 포함되어야 합니다.</p>
+  </div>
+
+  <div class="card">
+    <label for="newText">신판 텍스트 (개정 후)</label>
+    <textarea id="newText" placeholder="제1조(목적) 이 지침은…&#10;제2조(운영시간) …&#10;부칙&#10;이 지침은 2026년 9월 15일부터 시행한다." aria-describedby="newHint"></textarea>
+    <p id="newHint" class="hint">같은 규칙의 개정 이후 전문을 그대로 붙여넣으세요.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="runBtn" onclick="runDiff()">대조 실행</button>
+    <button class="btn secondary" onclick="loadSample()">샘플 불러오기</button>
+    <button class="btn secondary" onclick="clearAll()">지우기</button>
+  </div>
+
+  <div id="result" aria-live="polite"></div>
+
+  <footer>
+    <strong>admrul-diff 기반</strong> · 조문 대조 및 시행일 D-day 계산은 스크립트가 수행하며, LLM이 임의 추정하지 않습니다.<br>
+    MABC 2026 결선 제출용 · 팀명: 강정민
+  </footer>
+</div>
+
+<script>
+const sampleOld = `시립도서관 자료실 운영 지침
+[시행 2026. 3. 1.] [시립도서관 지침 제2026-4호, 2026. 2. 20., 일부개정]
+
+제1조(목적) 이 지침은 시립도서관 자료실의 운영에 필요한 사항을 정함을 목적으로 한다.
+
+제2조(운영시간) 자료실의 운영시간은 오전 9시부터 오후 6시까지로 한다. 다만, 관장이 필요하다고 인정하는 경우 운영시간을 조정할 수 있다.
+
+제3조(휴관일) 자료실의 휴관일은 매월 둘째·넷째 월요일 및 법정공휴일로 한다.
+
+제4조(자료 대출) 이용자는 1인당 5권의 자료를 14일간 대출할 수 있다.
+
+제5조(음식물 반입 금지) 자료실 내에는 음료를 포함한 일체의 음식물을 반입할 수 없다.
+
+부칙
+이 지침은 2026년 3월 1일부터 시행한다.`;
+
+const sampleNew = `시립도서관 자료실 운영 지침
+[시행 2026. 9. 15.] [시립도서관 지침 제2026-11호, 2026. 8. 25., 일부개정]
+
+제1조(목적) 이 지침은 시립도서관 자료실의 운영에 필요한 사항을 정함을 목적으로 한다.
+
+제2조(운영시간) 자료실의 운영시간은 오전 9시부터 오후 9시까지로 한다. 다만, 관장이 필요하다고 인정하는 경우 운영시간을 조정할 수 있다.
+
+제3조(휴관일) 자료실의 휴관일은 매월 둘째·넷째 월요일 및 법정공휴일로 한다.
+
+제4조(자료 대출) 이용자는 1인당 7권의 자료를 21일간 대출할 수 있다.
+
+제6조(디지털 자료실 운영) 디지털 자료실은 회원증을 발급받은 이용자에 한하여 1일 2시간 이내로 이용할 수 있다.
+
+부칙
+이 지침은 2026년 9월 15일부터 시행한다.`;
+
+function loadSample() {
+  document.getElementById('oldText').value = sampleOld;
+  document.getElementById('newText').value = sampleNew;
+}
+
+function clearAll() {
+  document.getElementById('oldText').value = '';
+  document.getElementById('newText').value = '';
+  document.getElementById('result').innerHTML = '';
+}
+
+async function runDiff() {
+  const oldText = document.getElementById('oldText').value;
+  const newText = document.getElementById('newText').value;
+  const resultEl = document.getElementById('result');
+  const runBtn = document.getElementById('runBtn');
+
+  if (!oldText.trim() || !newText.trim()) {
+    resultEl.innerHTML = '<div class="error-box" role="alert">구판과 신판 텍스트를 모두 입력해주세요.</div>';
+    return;
+  }
+
+  runBtn.disabled = true;
+  runBtn.textContent = '처리 중…';
+  resultEl.innerHTML = '<p class="loading">대조 중…</p>';
+
+  try {
+    const res = await fetch('/api/admrul-diff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_text: oldText, new_text: newText }),
+    });
+
+    const data = await res.json();
+
+    runBtn.disabled = false;
+    runBtn.textContent = '대조 실행';
+
+    if (data.error) {
+      resultEl.innerHTML = '<div class="error-box" role="alert">' + escapeHtml(data.message) + '</div>';
+      return;
+    }
+
+    resultEl.innerHTML = renderResult(data);
+  } catch (err) {
+    runBtn.disabled = false;
+    runBtn.textContent = '대조 실행';
+    resultEl.innerHTML = '<div class="error-box" role="alert">요청 중 오류가 발생했습니다: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderResult(data) {
+  const diff = data.diff || [];
+  const enact = data.enactment || {};
+  let html = '';
+
+  // Diff 표
+  if (diff.length > 0) {
+    html += '<div class="card result-card"><h3>신·구 조문 대조표 <span style="font-size:0.78rem;color:var(--muted);font-weight:400;">(' + diff.length + '건)</span></h3><table>';
+    html += '<thead><tr><th style="width:60px;">구분</th><th style="width:140px;">조문</th><th>구판 내용</th><th>신판 내용</th></tr></thead><tbody>';
+
+    for (const item of diff) {
+      const label = item.judgment === 'added' ? '신설' : item.judgment === 'modified' ? '변경' : '삭제';
+      const badgeClass = 'badge-' + item.judgment;
+      const oldContent = item.old_content || '<span style="color:#9ca3af;">(신설)</span>';
+      const newContent = item.new_content || '<span style="color:#991b1b;">(삭제)</span>';
+      const articleTitle = item.article_title
+        ? '제' + item.article_number + '조(' + item.article_title + ')'
+        : '제' + item.article_number + '조';
+
+      html += '<tr>';
+      html += '<td><span class="badge ' + badgeClass + '">' + label + '</span></td>';
+      html += '<td><strong>' + escapeHtml(articleTitle) + '</strong></td>';
+      html += '<td>' + escapeHtml(oldContent) + '</td>';
+      html += '<td>' + escapeHtml(newContent) + '</td>';
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    html += '<button class="json-toggle" onclick="toggleJson(\'diffJson\')">JSON 보기</button>';
+    html += '<pre id="diffJson" style="display:none;">' + escapeHtml(JSON.stringify(data.diff, null, 2)) + '</pre>';
+    html += '</div>';
+  } else {
+    html += '<div class="card result-card"><p class="empty-state">변경된 조문이 없습니다 — 구판과 신판이 동일합니다.</p></div>';
+  }
+
+  // D-day 표
+  html += '<div class="card result-card"><h3>시행 D-day</h3><table>';
+  html += '<thead><tr><th style="width:100px;">항목</th><th>구판</th><th>신판</th></tr></thead><tbody>';
+  html += '<tr><td><strong>시행일</strong></td><td>' + (enact.old_date || '<span style="color:#9ca3af;">시행일 미검출</span>') + '</td><td>' + (enact.new_date || '<span style="color:#9ca3af;">시행일 미검출</span>') + '</td></tr>';
+  html += '<tr><td><strong>기준일자</strong></td><td>' + escapeHtml(enact.reference_date) + '</td><td>' + escapeHtml(enact.reference_date) + '</td></tr>';
+
+  const oldStatus = enact.old_d_day_status || '시행일 미검출';
+  const newStatus = enact.new_d_day_status || '시행일 미검출';
+
+  const oldBadge = oldStatus.startsWith('D-') ? 'badge-modified'
+    : oldStatus === '시행중' ? 'badge-added'
+    : oldStatus === '오늘 시행' ? 'badge-added'
+    : '';
+  const newBadge = newStatus.startsWith('D-') ? 'badge-modified'
+    : newStatus === '시행중' ? 'badge-added'
+    : newStatus === '오늘 시행' ? 'badge-added'
+    : '';
+
+  html += '<tr><td><strong>시행상태</strong></td><td><span class="badge ' + oldBadge + '">' + escapeHtml(oldStatus) + '</span></td><td><span class="badge ' + newBadge + '">' + escapeHtml(newStatus) + '</span></td></tr>';
+  html += '</tbody></table>';
+  html += '<button class="json-toggle" onclick="toggleJson(\'enactJson\')">JSON 보기</button>';
+  html += '<pre id="enactJson" style="display:none;">' + escapeHtml(JSON.stringify(data.enactment, null, 2)) + '</pre>';
+  html += '</div>';
+
+  return html;
+}
+
+function toggleJson(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>
