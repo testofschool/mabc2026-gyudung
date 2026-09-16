@@ -132,69 +132,79 @@ function dDayStatus(enactment, reference) {
   return "시행중";
 }
 
-const corsHeaders = {
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*",
-};
+function sendJSON(res, statusCode, data) {
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.end(JSON.stringify(data, null, 2));
+}
 
-async function handler(request) {
-  if (request.method === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-      body: "",
-    };
+function sendError(res, statusCode, message) {
+  sendJSON(res, statusCode, { error: true, message: message });
+}
+
+function parseBody(req) {
+  return new Promise(function(resolve, reject) {
+    var body = "";
+    req.on("data", function(chunk) { body += chunk; });
+    req.on("end", function() {
+      if (!body) { resolve({}); return; }
+      try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+    });
+    req.on("error", reject);
+  });
+}
+
+async function handler(req, res) {
+  // CORS 프리플라이트
+  if (req.method === "OPTIONS") {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.end("");
+    return;
   }
 
-  if (request.method !== "POST") {
-    return {
-      statusCode: 405,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: true, message: "POST 메서드만 지원됩니다." }, null, 2),
-    };
+  if (req.method !== "POST") {
+    sendError(res, 405, "POST 메서드만 지원됩니다.");
+    return;
   }
 
   let body;
   try {
-    const text = await request.text();
-    body = text ? JSON.parse(text) : {};
+    body = await parseBody(req);
   } catch (e) {
-    return {
-      statusCode: 400,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: true, message: "유효하지 않은 JSON 요청입니다." }, null, 2),
-    };
+    sendError(res, 400, "유효하지 않은 JSON 요청입니다.");
+    return;
   }
 
   if (!body || typeof body !== "object") {
-    return {
-      statusCode: 400,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: true, message: "요청 본문이 비어 있거나 객체가 아닙니다." }, null, 2),
-    };
+    sendError(res, 400, "요청 본문이 비어 있거나 객체가 아닙니다.");
+    return;
   }
 
   const oldText = body.old_text || "";
   const newText = body.new_text || "";
 
   if (!oldText.trim()) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: "구판 입력이 비어 있습니다." }, null, 2) };
+    sendError(res, 400, "구판 입력이 비어 있습니다.");
+    return;
   }
   if (!newText.trim()) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: "신판 입력이 비어 있습니다." }, null, 2) };
+    sendError(res, 400, "신판 입력이 비어 있습니다.");
+    return;
   }
 
   const articleStartPattern = new RegExp("제\\d+(?:의\\d+)?조\\b");
   if (!articleStartPattern.test(oldText)) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: "구판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다." }, null, 2) };
+    sendError(res, 400, "구판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.");
+    return;
   }
   if (!articleStartPattern.test(newText)) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: "신판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다." }, null, 2) };
+    sendError(res, 400, "신판에서 조문 패턴(제N조)을 찾을 수 없습니다. 행정규칙/지침 형식이 아닌 것으로 보입니다.");
+    return;
   }
 
   const oldArticles = parseArticles(oldText);
@@ -216,11 +226,7 @@ async function handler(request) {
     },
   };
 
-  return {
-    statusCode: 200,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify(result, null, 2),
-  };
+  sendJSON(res, 200, result);
 }
 
 module.exports = { handler: handler };
