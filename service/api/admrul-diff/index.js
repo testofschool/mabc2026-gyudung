@@ -23,11 +23,12 @@ export async function handler(request) {
 
   let body;
   try {
-    body = await request.json();
+    const text = await request.text();
+    body = text ? JSON.parse(text) : {};
   } catch (e) {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: corsHeaders,
       body: JSON.stringify({ error: true, message: '유효하지 않은 JSON 요청입니다.' }, null, 2),
     };
   }
