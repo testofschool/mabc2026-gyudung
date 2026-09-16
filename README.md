@@ -17,7 +17,6 @@
 ```
 mabc-finals/
 ├── AGENTS.md              # 루트 에이전트 지침 (항상 로드)
-├── CLAUDE.md              # Claude Code용 — 첫 줄: @AGENTS.md
 ├── agent.md               # 범용 에이전트 지침 (플랫폼 독립)
 ├── orchestration.md       # 작업 흐름·역할·서브에이전트 라우팅
 ├── skill-manifest.md      # 프로젝트 스킬 카탈로그
