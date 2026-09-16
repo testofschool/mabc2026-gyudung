@@ -44,7 +44,7 @@ export async function handler(request) {
   const newText = body.new_text || '';
 
   // ---- 입력 validation ----
-  const articleStartPattern = /\제\d+(?:의\d+)?조\b/;
+  const articleStartPattern = /제\d+(?:의\d+)?조\b/;
   if (!oldText.trim()) {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: true, message: '구판 입력이 비어 있습니다.' }, null, 2) };
   }
@@ -228,3 +228,5 @@ const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
 };
+
+module.exports.handler = handler;
