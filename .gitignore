@@ -1,0 +1,23 @@
+# 연구 자료 (제출물 오염 방지)
+research/
+
+# 기확보 스킬 (서비스 코드와 무관)
+prelim/
+
+# 프로젝트 상태 (개인)
+project-state/
+
+# 제출물 (별도 관리)
+submission/
+
+# 문서
+docs/
+
+# 스크립트
+scripts/
+
+# 스킬
+skills/
+
+# macOS
+.DS_Store
