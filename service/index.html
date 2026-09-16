@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규정다름 — 행정규칙 신·구 조문 대조</title>
+<style>
+  :root {
+    --fg: var(--foreground, #1a1a1a);
+    --muted: var(--muted-foreground, #666);
+    --accent: var(--accent, #2563eb);
+    --border: var(--border, #d4d4d4);
+    --card: var(--card, #fff);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--fg);
+    background: #f8f9fa;
+    padding: 24px;
+    line-height: 1.6;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 32px; }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    color: var(--fg);
+    background: #fff;
+  }
+  textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .hint { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+  button.btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  button.btn:hover { opacity: 0.9; }
+  button.btn:active { transform: translateY(1px); }
+  button.btn.secondary {
+    background: #e5e7eb;
+    color: var(--fg);
+    margin-left: 8px;
+  }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  #result { margin-top: 24px; }
+  .result-card { margin-bottom: 20px; }
+  .result-card h3 { font-size: 1.1rem; margin-bottom: 12px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { background: #f3f4f6; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-added { background: #dcfce7; color: #166534; }
+  .badge-modified { background: #fef9c3; color: #854d0e; }
+  .badge-deleted { background: #fee2e2; color: #991b1b; }
+  .error-box {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 16px;
+  }
+  .loading { color: var(--muted); font-style: italic; }
+  .sample-link { color: var(--accent); cursor: pointer; text-decoration: underline; font-size: 0.85rem; }
+  .sample-link:hover { opacity: 0.8; }
+  footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>규정다름</h1>
+    <p class="subtitle">행정규칙/지침의 구판과 신판을 붙여넣으면 조문별 대조표 + 시행일 D-day를 자동으로 출력합니다.</p>
+  </header>
+
+  <div class="card">
+    <label for="oldText">구판 텍스트 (개정 전)</label>
+    <textarea id="oldText" placeholder="제1조(목적) …&#10;제2조 …&#10;부칙&#10;이 지침은 2026년 3월 1일부터 시행한다."></textarea>
+    <p class="hint">행정규칙/지침/훈령/예규/요령 등의 전문을 그대로 붙여넣으세요.</p>
+  </div>
+
+  <div class="card">
+    <label for="newText">신판 텍스트 (개정 후)</label>
+    <textarea id="newText" placeholder="제1조(목적) …&#10;제2조 …&#10;부칙&#10;이 지침은 2026년 9월 15일부터 시행한다."></textarea>
+    <p class="hint">같은 규칙의 개정 이후 전문을 그대로 붙여넣으세요.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="runDiff()">대조 실행</button>
+    <button class="btn secondary" onclick="loadSample()">샘플 불러오기</button>
+    <button class="btn secondary" onclick="clearAll()">지우기</button>
+  </div>
+
+  <div id="result"></div>
+
+  <footer>
+    admrul-diff 기반 · 조문 대조 및 시행일 D-day 계산은 스크립트가 수행 · MABC 2026 결선 제출용
+  </footer>
+</div>
+
+<script>
+const sampleOld = `시립도서관 자료실 운영 지침
+[시행 2026. 3. 1.] [시립도서관 지침 제2026-4호, 2026. 2. 20., 일부개정]
+
+제1조(목적) 이 지침은 시립도서관 자료실의 운영에 필요한 사항을 정함을 목적으로 한다.
+
+제2조(운영시간) 자료실의 운영시간은 오전 9시부터 오후 6시까지로 한다. 다만, 관장이 필요하다고 인정하는 경우 운영시간을 조정할 수 있다.
+
+제3조(휴관일) 자료실의 휴관일은 매월 둘째·넷째 월요일 및 법정공휴일로 한다.
+
+제4조(자료 대출) 이용자는 1인당 5권의 자료를 14일간 대출할 수 있다.
+
+제5조(음식물 반입 금지) 자료실 내에는 음료를 포함한 일체의 음식물을 반입할 수 없다.
+
+부칙
+이 지침은 2026년 3월 1일부터 시행한다.`;
+
+const sampleNew = `시립도서관 자료실 운영 지침
+[시행 2026. 9. 15.] [시립도서관 지침 제2026-11호, 2026. 8. 25., 일부개정]
+
+제1조(목적) 이 지침은 시립도서관 자료실의 운영에 필요한 사항을 정함을 목적으로 한다.
+
+제2조(운영시간) 자료실의 운영시간은 오전 9시부터 오후 9시까지로 한다. 다만, 관장이 필요하다고 인정하는 경우 운영시간을 조정할 수 있다.
+
+제3조(휴관일) 자료실의 휴관일은 매월 둘째·넷째 월요일 및 법정공휴일로 한다.
+
+제4조(자료 대출) 이용자는 1인당 7권의 자료를 21일간 대출할 수 있다.
+
+제6조(디지털 자료실 운영) 디지털 자료실은 회원증을 발급받은 이용자에 한하여 1일 2시간 이내로 이용할 수 있다.
+
+부칙
+이 지침은 2026년 9월 15일부터 시행한다.`;
+
+function loadSample() {
+  document.getElementById('oldText').value = sampleOld;
+  document.getElementById('newText').value = sampleNew;
+}
+
+function clearAll() {
+  document.getElementById('oldText').value = '';
+  document.getElementById('newText').value = '';
+  document.getElementById('result').innerHTML = '';
+}
+
+async function runDiff() {
+  const oldText = document.getElementById('oldText').value;
+  const newText = document.getElementById('newText').value;
+  const resultEl = document.getElementById('result');
+
+  if (!oldText.trim() || !newText.trim()) {
+    resultEl.innerHTML = '<div class="error-box">구판과 신판 텍스트를 모두 입력해주세요.</div>';
+    return;
+  }
+
+  resultEl.innerHTML = '<p class="loading">대조 중…</p>';
+
+  try {
+    const res = await fetch('/api/admrul-diff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_text: oldText, new_text: newText }),
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      resultEl.innerHTML = '<div class="error-box">' + escapeHtml(data.message) + '</div>';
+      return;
+    }
+
+    resultEl.innerHTML = renderResult(data);
+  } catch (err) {
+    resultEl.innerHTML = '<div class="error-box">요청 중 오류가 발생했습니다: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderResult(data) {
+  const diff = data.diff || [];
+  const enact = data.enactment || {};
+
+  let html = '';
+
+  if (diff.length > 0) {
+    html += '<div class="card result-card"><h3>신·구 조문 대조표</h3><table>';
+    html += '<thead><tr><th>구분</th><th>조문</th><th>구판 내용</th><th>신판 내용</th></tr></thead><tbody>';
+
+    for (const item of diff) {
+      const label = item.judgment === 'added' ? '신설' : item.judgment === 'modified' ? '변경' : '삭제';
+      const badgeClass = 'badge-' + item.judgment;
+      const oldContent = item.old_content || '<span style="color:#999">(신설)</span>';
+      const newContent = item.new_content || '<span style="color:#991b1b">(삭제)</span>';
+      const articleTitle = item.article_title ? '제' + item.article_number + '조(' + item.article_title + ')' : '제' + item.article_number + '조';
+
+      html += '<tr>';
+      html += '<td><span class="badge ' + badgeClass + '">' + label + '</span></td>';
+      html += '<td>' + escapeHtml(articleTitle) + '</td>';
+      html += '<td>' + escapeHtml(oldContent) + '</td>';
+      html += '<td>' + escapeHtml(newContent) + '</td>';
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div class="card result-card"><p>변경된 조문이 없습니다 (구판과 신판이 동일).</p></div>';
+  }
+
+  html += '<div class="card result-card"><h3>시행 D-day</h3><table>';
+  html += '<thead><tr><th>항목</th><th>구판</th><th>신판</th></tr></thead><tbody>';
+  html += '<tr><td>시행일</td><td>' + (enact.old_date || '시행일 미검출') + '</td><td>' + (enact.new_date || '시행일 미검출') + '</td></tr>';
+  html += '<tr><td>기준일자</td><td>' + escapeHtml(enact.reference_date) + '</td><td>' + escapeHtml(enact.reference_date) + '</td></tr>';
+  html += '<tr><td>시행상태</td><td>' + escapeHtml(enact.old_d_day_status) + '</td><td>' + escapeHtml(enact.new_d_day_status) + '</td></tr>';
+  html += '</tbody></table></div>';
+
+  return html;
+}
+</script>
+</body>
+</html>
